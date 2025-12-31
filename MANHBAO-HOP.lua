@@ -1,226 +1,206 @@
-
---========================
 -- MANHBAO-HOP by manhbao
--- Delta Optimized
---========================
+-- Delta Optimized | Blox Fruits
 
 if not game:IsLoaded() then game.Loaded:Wait() end
+
+-- Save file
+if writefile and not isfile("manhbao-hop.lua") then
+    writefile("manhbao-hop.lua","-- MANHBAO-HOP by manhbao")
+end
 
 -- Services
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
 -- Config
-local PLACE_ID = game.PlaceId
-local SAVE_FILE = "MANHBAO_KEY.json"
-local CORRECT_KEY = "MANHBAO-KEY"
-local KEY_DURATION = 48 * 60 * 60
-local GET_KEY_LINK = "https://link4m.com/6yGePO7"
 local LOGO_ID = "rbxassetid://96045391302700"
+local CORRECT_KEY = "MANHBAO-KEY"
+local KEY_TIME = 48 * 60 * 60
+local KEY_FILE = "MANHBAO_KEY.json"
+local GET_KEY_LINK = "https://link4m.com/6yGePO7"
 
 --========================
 -- KEY SYSTEM
 --========================
-local function makeSignature(key, time, uid)
-    local raw = key .. time .. uid
-    local sum = 0
-    for i = 1, #raw do
-        sum += string.byte(raw, i)
-    end
-    return tostring(sum)
+local function sign(key,time,uid)
+    local s = 0
+    for i = 1, #key do s += key:byte(i) end
+    return tostring(s + time + uid)
 end
 
 local function saveKey()
-    if writefile then
-        local now = os.time()
-        local data = {
-            key = CORRECT_KEY,
-            time = now,
-            uid = LocalPlayer.UserId,
-            sig = makeSignature(CORRECT_KEY, now, LocalPlayer.UserId)
-        }
-        writefile(SAVE_FILE, HttpService:JSONEncode(data))
-    end
+    local t = os.time()
+    writefile(KEY_FILE, HttpService:JSONEncode({
+        key = CORRECT_KEY,
+        time = t,
+        uid = LocalPlayer.UserId,
+        sig = sign(CORRECT_KEY,t,LocalPlayer.UserId)
+    }))
 end
 
-local function getKeyStatus()
-    if isfile and isfile(SAVE_FILE) then
-        local data = HttpService:JSONDecode(readfile(SAVE_FILE))
-        if data.uid ~= LocalPlayer.UserId then return "invalid" end
-        if data.sig ~= makeSignature(data.key, data.time, data.uid) then return "invalid" end
-        if data.key == CORRECT_KEY then
-            if os.time() - data.time <= KEY_DURATION then
-                return "valid"
-            else
-                return "expired"
-            end
+local function checkKey()
+    if isfile(KEY_FILE) then
+        local d = HttpService:JSONDecode(readfile(KEY_FILE))
+        if d.uid ~= LocalPlayer.UserId then return false end
+        if d.sig ~= sign(d.key,d.time,d.uid) then return false end
+        if os.time() - d.time <= KEY_TIME and d.key == CORRECT_KEY then
+            return true
         end
     end
-    return "none"
+    return false
 end
 
 --========================
--- KEY GUI
+-- KEY UI
 --========================
-local keyStatus = getKeyStatus()
-if keyStatus ~= "valid" then
+if not checkKey() then
     local sg = Instance.new("ScreenGui", game.CoreGui)
-    sg.Name = "MANHBAO_KEY_GUI"
+    local f = Instance.new("Frame", sg)
+    f.Size = UDim2.fromScale(0.32,0.32)
+    f.Position = UDim2.fromScale(0.34,0.34)
+    f.BackgroundColor3 = Color3.fromRGB(20,20,20)
+    f.Active = true
+    f.Draggable = true
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0,12)
 
-    local frame = Instance.new("Frame", sg)
-    frame.Size = UDim2.fromScale(0.3,0.3)
-    frame.Position = UDim2.fromScale(0.35,0.35)
-    frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
-    frame.Active = true
-    frame.Draggable = true
+    local t = Instance.new("TextLabel", f)
+    t.Size = UDim2.new(1,0,0.22,0)
+    t.Text = "MANHBAO-HOP\nby manhbao"
+    t.TextScaled = true
+    t.Font = Enum.Font.GothamBold
+    t.BackgroundTransparency = 1
+    t.TextColor3 = Color3.new(1,1,1)
 
-    local title = Instance.new("TextLabel", frame)
-    title.Size = UDim2.new(1,0,0.25,0)
-    title.Text = "MANHBAO-HOP"
-    title.TextColor3 = Color3.new(1,1,1)
-    title.BackgroundTransparency = 1
-    title.TextScaled = true
-
-    local sub = Instance.new("TextLabel", frame)
-    sub.Size = UDim2.new(1,0,0.15,0)
-    sub.Position = UDim2.new(0,0,0.22,0)
-    sub.Text = "by manhbao"
-    sub.TextColor3 = Color3.fromRGB(200,200,200)
-    sub.BackgroundTransparency = 1
-    sub.TextScaled = true
-
-    local box = Instance.new("TextBox", frame)
-    box.PlaceholderText = "Nhập key..."
+    local box = Instance.new("TextBox", f)
     box.Size = UDim2.new(0.8,0,0.18,0)
-    box.Position = UDim2.new(0.1,0,0.45,0)
-    box.Text = ""
+    box.Position = UDim2.new(0.1,0,0.38,0)
+    box.PlaceholderText = "Nhập key..."
 
-    local status = Instance.new("TextLabel", frame)
-    status.Size = UDim2.new(1,0,0.15,0)
-    status.Position = UDim2.new(0,0,0.65,0)
+    local status = Instance.new("TextLabel", f)
+    status.Size = UDim2.new(1,0,0.12,0)
+    status.Position = UDim2.new(0,0,0.58,0)
+    status.TextScaled = true
     status.BackgroundTransparency = 1
     status.TextColor3 = Color3.fromRGB(255,120,120)
-    status.TextScaled = true
 
-    if keyStatus == "expired" then
-        status.Text = "🔒 Key đã hết hạn, vui lòng get key lại!"
-    elseif keyStatus == "invalid" then
-        status.Text = "⚠️ File key không hợp lệ!"
-    end
+    local get = Instance.new("TextButton", f)
+    get.Size = UDim2.new(0.4,0,0.16,0)
+    get.Position = UDim2.new(0.1,0,0.75,0)
+    get.Text = "GET KEY"
 
-    local getKey = Instance.new("TextButton", frame)
-    getKey.Text = "GET KEY"
-    getKey.Size = UDim2.new(0.4,0,0.15,0)
-    getKey.Position = UDim2.new(0.1,0,0.82,0)
+    local ok = Instance.new("TextButton", f)
+    ok.Size = UDim2.new(0.4,0,0.16,0)
+    ok.Position = UDim2.new(0.5,0,0.75,0)
+    ok.Text = "XÁC NHẬN"
 
-    local submit = Instance.new("TextButton", frame)
-    submit.Text = "XÁC NHẬN"
-    submit.Size = UDim2.new(0.4,0,0.15,0)
-    submit.Position = UDim2.new(0.5,0,0.82,0)
-
-    getKey.MouseButton1Click:Connect(function()
+    get.MouseButton1Click:Connect(function()
         if setclipboard then setclipboard(GET_KEY_LINK) end
         status.Text = "📋 Đã copy link get key"
     end)
 
-    submit.MouseButton1Click:Connect(function()
+    ok.MouseButton1Click:Connect(function()
         if box.Text == CORRECT_KEY then
             saveKey()
             sg:Destroy()
         else
-            status.Text = "❌ Key sai!"
+            status.Text = "❌ Key sai"
         end
     end)
 
-    repeat task.wait() until getKeyStatus() == "valid"
+    repeat task.wait() until checkKey()
 end
 
 --========================
--- MAIN GUI
+-- HOP EFFECT
 --========================
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "MANHBAO_MAIN"
+local function hop()
+    local blur = Instance.new("BlurEffect", game.Lighting)
+    blur.Size = 25
 
--- Toggle logo
-local toggle = Instance.new("ImageButton", gui)
-toggle.Size = UDim2.fromOffset(45,45)
-toggle.Position = UDim2.fromScale(0.02,0.4)
+    local gui = Instance.new("ScreenGui", game.CoreGui)
+
+    local logo = Instance.new("ImageLabel", gui)
+    logo.Size = UDim2.fromScale(0.22,0.22)
+    logo.Position = UDim2.fromScale(0.5,0.45)
+    logo.AnchorPoint = Vector2.new(0.5,0.5)
+    logo.Image = LOGO_ID
+    logo.BackgroundTransparency = 1
+
+    local txt = Instance.new("TextLabel", gui)
+    txt.Size = UDim2.fromScale(1,0.18)
+    txt.Position = UDim2.fromScale(0,0.62)
+    txt.Text = "HOP SEVER...\nMANHBAO-HOP\nby manhbao"
+    txt.TextScaled = true
+    txt.Font = Enum.Font.GothamBold
+    txt.BackgroundTransparency = 1
+    txt.TextColor3 = Color3.new(1,1,1)
+
+    task.spawn(function()
+        while gui.Parent do
+            TweenService:Create(logo,TweenInfo.new(1,Enum.EasingStyle.Linear),
+                {Rotation = logo.Rotation + 360}):Play()
+            task.wait(1)
+        end
+    end)
+
+    task.wait(1.2)
+    TeleportService:Teleport(game.PlaceId, LocalPlayer)
+end
+
+--========================
+-- REDZ STYLE UI (1 TAB)
+--========================
+local ui = Instance.new("ScreenGui", game.CoreGui)
+
+local toggle = Instance.new("ImageButton", ui)
+toggle.Size = UDim2.fromOffset(46,46)
+toggle.Position = UDim2.fromScale(0.02,0.45)
 toggle.Image = LOGO_ID
 toggle.BackgroundTransparency = 1
 
--- Main frame
-local main = Instance.new("Frame", gui)
-main.Size = UDim2.fromScale(0.35,0.45)
-main.Position = UDim2.fromScale(0.325,0.275)
-main.BackgroundColor3 = Color3.fromRGB(20,20,20)
-main.Visible = true
+local main = Instance.new("Frame", ui)
+main.Size = UDim2.fromScale(0.38,0.48)
+main.Position = UDim2.fromScale(0.31,0.26)
+main.BackgroundColor3 = Color3.fromRGB(25,25,25)
 main.Active = true
 main.Draggable = true
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
 
 toggle.MouseButton1Click:Connect(function()
     main.Visible = not main.Visible
 end)
 
--- Title
-local t = Instance.new("TextLabel", main)
-t.Size = UDim2.new(1,0,0.15,0)
-t.Text = "MANHBAO-HOP"
-t.TextScaled = true
-t.BackgroundTransparency = 1
-t.TextColor3 = Color3.new(1,1,1)
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0.14,0)
+title.Text = "MANHBAO-HOP | SEVER"
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(1,1,1)
 
-local s = Instance.new("TextLabel", main)
-s.Size = UDim2.new(1,0,0.08,0)
-s.Position = UDim2.new(0,0,0.13,0)
-s.Text = "by manhbao"
-s.TextScaled = true
-s.BackgroundTransparency = 1
-s.TextColor3 = Color3.fromRGB(180,180,180)
+local body = Instance.new("Frame", main)
+body.Size = UDim2.new(1,0,0.8,0)
+body.Position = UDim2.new(0,0,0.18,0)
+body.BackgroundTransparency = 1
 
---========================
--- SERVER TAB
---========================
-local function hopServer(lowPing)
-    -- Effect
-    local blur = Instance.new("BlurEffect", game.Lighting)
-    blur.Size = 24
-
-    local overlay = Instance.new("ScreenGui", game.CoreGui)
-    local img = Instance.new("ImageLabel", overlay)
-    img.Size = UDim2.fromScale(0.25,0.25)
-    img.Position = UDim2.fromScale(0.375,0.35)
-    img.Image = LOGO_ID
-    img.BackgroundTransparency = 1
-
-    local txt = Instance.new("TextLabel", overlay)
-    txt.Size = UDim2.fromScale(1,0.1)
-    txt.Position = UDim2.fromScale(0,0.6)
-    txt.Text = "MANHBAO-HOP\nby manhbao"
-    txt.TextScaled = true
-    txt.BackgroundTransparency = 1
-    txt.TextColor3 = Color3.new(1,1,1)
-
-    task.wait(1)
-    TeleportService:Teleport(PLACE_ID, LocalPlayer)
+local function btn(text,y)
+    local b = Instance.new("TextButton", body)
+    b.Size = UDim2.new(0.8,0,0.22,0)
+    b.Position = UDim2.new(0.1,0,y,0)
+    b.Text = text
+    b.Font = Enum.Font.GothamBold
+    b.TextScaled = true
+    b.TextColor3 = Color3.new(1,1,1)
+    b.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
+    return b
 end
 
-local btn1 = Instance.new("TextButton", main)
-btn1.Size = UDim2.new(0.8,0,0.18,0)
-btn1.Position = UDim2.new(0.1,0,0.35,0)
-btn1.Text = "HOP SERVER ÍT NGƯỜI"
+local b1 = btn("HOP SEVER ÍT NGƯỜI",0.15)
+b1.MouseButton1Click:Connect(hop)
 
-btn1.MouseButton1Click:Connect(function()
-    hopServer(false)
-end)
-
-local btn2 = Instance.new("TextButton", main)
-btn2.Size = UDim2.new(0.8,0,0.18,0)
-btn2.Position = UDim2.new(0.1,0,0.6,0)
-btn2.Text = "HOP SERVER PING THẤP"
-
-btn2.MouseButton1Click:Connect(function()
-    hopServer(true)
-end)
+local b2 = btn("HOP SEVER PING THẤP",0.5)
+b2.MouseButton1Click:Connect(hop)
