@@ -1,5 +1,6 @@
 -- MANHBAOFRUITS-HUB
--- Auto Pick All Fruits | ESP | Safe Store | Auto Hop | Thank You Text
+-- Auto Pick All Fruits | ESP FIX | Safe Store | Auto Hop | Thank You Text
+-- FULL FIX VERSION
 
 ------------------------------------------------
 -- SERVICES
@@ -57,27 +58,38 @@ local function StorageHasFruit()
 end
 
 ------------------------------------------------
--- ESP FRUIT
+-- ESP FRUIT (FIXED)
 ------------------------------------------------
 local function AddFruitESP(tool)
-    if tool:FindFirstChild("MANHBAO_ESP") then return end
+    if not tool:IsA("Tool") then return end
+    local handle = tool:FindFirstChild("Handle")
+    if not handle then return end
+    if handle:FindFirstChild("MANHBAO_ESP") then return end
 
-    local hl = Instance.new("Highlight", tool)
-    hl.Name = "MANHBAO_ESP"
-    hl.FillColor = Color3.fromRGB(255,0,0)
-    hl.OutlineColor = Color3.fromRGB(255,255,255)
-
-    local bill = Instance.new("BillboardGui", tool)
+    local bill = Instance.new("BillboardGui")
     bill.Name = "MANHBAO_ESP"
-    bill.Size = UDim2.new(0,130,0,40)
+    bill.Adornee = handle
+    bill.Size = UDim2.new(0,140,0,40)
     bill.AlwaysOnTop = true
+    bill.StudsOffset = Vector3.new(0,2.5,0)
+    bill.Parent = handle
 
-    local txt = Instance.new("TextLabel", bill)
+    local txt = Instance.new("TextLabel")
     txt.Size = UDim2.new(1,0,1,0)
     txt.BackgroundTransparency = 1
     txt.Text = tool.Name
-    txt.TextColor3 = Color3.fromRGB(255,50,50)
+    txt.TextColor3 = Color3.fromRGB(0,170,255)
+    txt.TextStrokeTransparency = 0
     txt.TextScaled = true
+    txt.Font = Enum.Font.GothamBold
+    txt.Parent = bill
+
+    local hl = Instance.new("Highlight")
+    hl.Name = "MANHBAO_ESP"
+    hl.Adornee = tool
+    hl.FillColor = Color3.fromRGB(0,170,255)
+    hl.OutlineColor = Color3.fromRGB(255,255,255)
+    hl.Parent = tool
 end
 
 ------------------------------------------------
@@ -159,7 +171,7 @@ thankGui.Visible = false
 local viText = Instance.new("TextLabel", thankGui)
 viText.Size = UDim2.new(1,0,0.5,0)
 viText.BackgroundTransparency = 1
-viText.Text = "CẢM ƠN ĐÃ SỬ DỤNG"
+viText.Text = "Cáº¢M Æ N ÄÃƒ Sá»¬ Dá»¤NG"
 viText.TextColor3 = Color3.fromRGB(0,170,255)
 viText.TextScaled = true
 viText.TextTransparency = 1
@@ -236,3 +248,4 @@ task.spawn(function()
         end
     end
 end)
+
